@@ -226,8 +226,7 @@ class Pylontech:
         """ Returns a map of the batteries id to their serial number """
         batteries = {}
         for adr in range(start, end, 1):
-            bdevid = "{:02X}".format(adr).encode()
-            self.send_cmd(adr, 0x93, bdevid) # Probe for serial number
+            self.send_cmd(adr, 0x93, "{:02X}".format(adr).encode()) # Probe for serial number
             raw_frame = self.s.readline()
 
             if raw_frame:
@@ -242,38 +241,22 @@ class Pylontech:
         return batteries
 
 
-    def get_protocol_version(self, adr=None):
-        if adr:
-            info = "{:02X}".format(adr).encode()
-            self.send_cmd(adr, 0x4f, info)
-        else:
-            self.send_cmd(0, 0x4f)
+    def get_protocol_version(self, adr):
+        self.send_cmd(adr, 0x4f, "{:02X}".format(adr).encode())
         return self.read_frame()
 
-
-    def get_manufacturer_info(self, adr=None):
-        if adr:
-            info = "{:02X}".format(adr).encode()
-            self.send_cmd(adr, 0x51, info)
-        else:
-            self.send_cmd(0, 0x51)
+    def get_manufacturer_info(self, adr):
+        self.send_cmd(adr, 0x51, "{:02X}".format(adr).encode())
         f = self.read_frame()
         return self.manufacturer_info_fmt.parse(f.info)
 
-
-    def get_system_parameters(self, dev_id=None):
-        if dev_id:
-            bdevid = "{:02X}".format(dev_id).encode()
-            self.send_cmd(dev_id, 0x47, bdevid)
-        else:
-            self.send_cmd(2, 0x47)
-
+    def get_system_parameters(self, adr):
+        self.send_cmd(adr, 0x47, "{:02X}".format(adr).encode())
         f = self.read_frame()
         return self.system_parameters_fmt.parse(f.info[1:])
 
-    def get_management_info(self, dev_id):
-        bdevid = "{:02X}".format(dev_id).encode()
-        self.send_cmd(dev_id, 0x92, bdevid)
+    def get_management_info(self, adr):
+        self.send_cmd(adr, 0x92, "{:02X}".format(adr).encode())
         f = self.read_frame()
 
         print(f.info)
@@ -282,38 +265,25 @@ class Pylontech:
         print(ff)
         return ff
 
-    def get_module_serial_number(self, dev_id=None):
-        if dev_id:
-            bdevid = "{:02X}".format(dev_id).encode()
-            self.send_cmd(dev_id, 0x93, bdevid)
-        else:
-            self.send_cmd(2, 0x93)
-
+    def get_module_serial_number(self, adr):
+        self.send_cmd(adr, 0x93, "{:02X}".format(adr).encode())
         f = self.read_frame()
-        # infoflag = f.info[0]
         return self.module_serial_number_fmt.parse(f.info[0:])
         
     def get_module_software_version(self, adr):
-        info = "{:02X}".format(adr).encode()
-        self.send_cmd(adr, 0x96, info)
+        self.send_cmd(adr, 0x96, "{:02X}".format(adr).encode())
         f = self.read_frame()
         return self.module_software_version_fmt.parse(f.info)
 
     def get_values(self):
         self.send_cmd(2, 0x42, b'FF')
         f = self.read_frame()
+        return self.get_values_fmt.parse(f.info[1:])
 
-        # infoflag = f.info[0]
-        d = self.get_values_fmt.parse(f.info[1:])
-        return d
-
-    def get_values_single(self, dev_id):
-        bdevid = "{:02X}".format(dev_id).encode()
-        self.send_cmd(dev_id, 0x42, bdevid)
+    def get_values_single(self, adr):
+        self.send_cmd(adr, 0x42, "{:02X}".format(adr).encode())
         f = self.read_frame()
-        # infoflag = f.info[0]
-        d = self.get_values_single_fmt.parse(f.info[1:])
-        return d
+        return self.get_values_single_fmt.parse(f.info[1:])
 
     def get_alarm_info(self, adr=0):
         self.send_cmd(adr, 0x4f,b'FF')
@@ -322,10 +292,10 @@ class Pylontech:
 
 if __name__ == '__main__':
     p = Pylontech()
-    # print(p.get_protocol_version())
-    # print(p.get_manufacturer_info())
-    # print(p.get_system_parameters())
-    # print(p.get_management_info())
-    # print(p.get_module_serial_number())
+    # print(p.get_protocol_version(2))
+    # print(p.get_manufacturer_info(2))
+    # print(p.get_system_parameters(2))
+    # print(p.get_management_info(2))
+    # print(p.get_module_serial_number(2))
     # print(p.get_values())
     print(p.get_values_single(2))
