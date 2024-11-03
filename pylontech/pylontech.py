@@ -92,6 +92,11 @@ class Pylontech:
         "ModuleSerialNumber" / JoinBytes(construct.Array(16, construct.Byte)),
     )
 
+    module_software_version_fmt = construct.Struct(
+        "CommandValue" / construct.Byte,
+        "ModuleSoftwareVersion" / JoinBytes(construct.Array(5, construct.Byte)),
+    )
+    
     get_values_fmt = construct.Struct(
         "NumberOfModules" / construct.Byte,
         "Module" / construct.Array(construct.this.NumberOfModules, construct.Struct(
@@ -237,13 +242,21 @@ class Pylontech:
         return batteries
 
 
-    def get_protocol_version(self):
-        self.send_cmd(0, 0x4f)
+    def get_protocol_version(self, adr=None):
+        if adr:
+            info = "{:02X}".format(adr).encode()
+            self.send_cmd(adr, 0x4f, info)
+        else:
+            self.send_cmd(0, 0x4f)
         return self.read_frame()
 
 
-    def get_manufacturer_info(self):
-        self.send_cmd(0, 0x51)
+    def get_manufacturer_info(self, adr=None):
+        if adr:
+            info = "{:02X}".format(adr).encode()
+            self.send_cmd(adr, 0x51, info)
+        else:
+            self.send_cmd(0, 0x51)
         f = self.read_frame()
         return self.manufacturer_info_fmt.parse(f.info)
 
@@ -279,6 +292,12 @@ class Pylontech:
         f = self.read_frame()
         # infoflag = f.info[0]
         return self.module_serial_number_fmt.parse(f.info[0:])
+        
+    def get_module_software_version(self, adr):
+        info = "{:02X}".format(adr).encode()
+        self.send_cmd(adr, 0x96, info)
+        f = self.read_frame()
+        return self.module_software_version_fmt.parse(f.info)
 
     def get_values(self):
         self.send_cmd(2, 0x42, b'FF')
@@ -295,6 +314,10 @@ class Pylontech:
         # infoflag = f.info[0]
         d = self.get_values_single_fmt.parse(f.info[1:])
         return d
+
+    def get_alarm_info(self, adr=0):
+        self.send_cmd(adr, 0x4f,b'FF')
+        return self.read_frame()
 
 
 if __name__ == '__main__':
