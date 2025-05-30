@@ -120,7 +120,7 @@ class SerialDeviceTransport(SerialTransport):
         self.s.write(data)
 
 
-class TelnetTransport(SerialTransport):
+class TelnetlibLegacyTransport(SerialTransport):
     def __init__(self, host, port=23, timeout=2):
         self.timeout = timeout
         self.s = telnetlib.Telnet(host, port, timeout=self.timeout)
@@ -130,3 +130,35 @@ class TelnetTransport(SerialTransport):
 
     def write(self, data: bytes):
         self.s.write(data)
+
+import asyncio
+import telnetlib3
+
+class Telnetlib3Transport(SerialTransport):
+    def __init__(self, host, port=23, timeout=2):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self.reader = None
+        self.writer = None
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self._connect())
+
+    async def _connect(self):
+        self.reader, self.writer = await telnetlib3.open_connection(self.host, self.port)
+
+    def readln(self) -> bytes:
+        # Read until carriage return, running async read in sync context
+        return self.loop.run_until_complete(self.reader.readuntil(b'\r'))
+
+    def write(self, data: bytes):
+        # Write and drain, running async operations in sync context
+        self.writer._write(data)
+        self.loop.run_until_complete(self.writer.drain())
+
+    def close(self):
+        # Close connection and event loop
+        self.writer.close()
+        self.loop.run_until_complete(self.writer.wait_closed())
+        self.loop.close()
