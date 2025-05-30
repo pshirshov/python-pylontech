@@ -23,23 +23,21 @@ jobs:
       uses: snok/install-poetry@v1
     - name: Install dependencies
       run: |
-        poetry lock --no-interaction
-        poetry install --no-interaction
+        uv lock
     - name: Build
       run: |
-        poetry build
+        uv build
     - name: Test
       run: |
-        poetry run pytest
+        uv run pytest
     - name: Lint with flake8
       continue-on-error: true
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        poetry run flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        poetry run flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics        
+        uv run flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Publish distribution 📦 to PyPI
       if: startsWith(github.event.ref, 'refs/tags') || github.event_name == 'release'
       run: |
-        poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-        poetry publish    
+        uv publish --token ${{ secrets.PYPI_TOKEN }}

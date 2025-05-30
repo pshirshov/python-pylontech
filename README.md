@@ -78,7 +78,7 @@ This lib depends on `pyserial` and the awesome `construct` lib.
 TCP demo:
 
 ```bash
-poetry run python ./demos/test-tcp.py 192.168.1.7 10
+uv run python ./demos/test-tcp.py 192.168.1.7 10
 ```
 
 Serial:
@@ -86,7 +86,7 @@ Serial:
 ```bash
 socat  -v pty,link=/tmp/serial,waitslave tcp:192.168.1.7:23,forever
 # in another terminal
-poetry run python ./demos/test-serial.py /tmp/serial 1 
+uv run python ./demos/test-serial.py /tmp/serial 1 
 ```
 
 # Hardware wiring

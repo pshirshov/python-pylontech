@@ -2,43 +2,71 @@
 name = "python-pylontech-ext"
 version = "0.4.1"
 description = "Interfaces with Pylontech Batteries using RS485 protocol"
-license="MIT"
-keywords=["pylontech", "pylon", "rs485", "lithium battery", "US2000", "US2000C", "US3000", "US5000"]
-url="http://github.com/Frankkkkk/python-pylontech"
-classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: MIT License",
-    ]
 authors = [
-    {name = "Frank Villaro-Dixon",email= "frank@villaro-dixon.eu"},
-    {name = "Pavel Shirshov",email = "pshirshov@eml.cc"}
-
+    { name = "Frank Villaro-Dixon", email = "frank@villaro-dixon.eu" },
+    { name = "Pavel Shirshov", email = "pshirshov@eml.cc" },
 ]
-readme = "README.md"
 requires-python = ">=3.13"
+readme = "README.md"
+license = "MIT"
+keywords = [
+    "pylontech",
+    "pylon",
+    "rs485",
+    "lithium battery",
+    "US2000",
+    "US2000C",
+    "US3000",
+    "US5000",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
+]
 dependencies = [
-    'pyserial',
-    'construct',
-    'telnetlib3',
-    'standard-telnetlib',
-    'rich'
+    "pyserial",
+    "construct",
+    "telnetlib3",
+    "standard-telnetlib",
+    "rich",
+]
+url = "http://github.com/Frankkkkk/python-pylontech"
+
+[project.scripts]
+poller = "pylontechpoller:poller.main"
+
+[dependency-groups]
+test = ["pytest"]
+dev = ["flake8"]
+
+[tool.uv]
+default-groups = [
+    "test",
+    "dev",
 ]
 
-[tool.poetry]
-packages = [{include = "pylontech", from = "src"}]
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/pylontech",
+    "src/pylontechpoller",
+]
 exclude = ["demos"]
 
+[tool.hatch.build.targets.wheel]
+include = [
+    "src/pylontech",
+    "src/pylontechpoller",
+]
+exclude = ["demos"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/pylontech" = "pylontech"
+"src/pylontechpoller" = "pylontechpoller"
+
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.group.test.dependencies]
-pytest = ">=8.0"
-
-
-[tool.poetry.group.dev.dependencies]
-flake8 = "^7.2.0"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
