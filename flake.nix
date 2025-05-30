@@ -18,7 +18,7 @@
             nativeBuildInputs = with pkgs.buildPackages; [
               git
               socat
-              ser2net
+              poetry
 
               (python313.withPackages (python-pkgs: [
                 python-pkgs.pyserial
