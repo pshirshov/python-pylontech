@@ -40,9 +40,6 @@ jobs:
         poetry run flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics        
     - name: Publish distribution 📦 to PyPI
       if: startsWith(github.event.ref, 'refs/tags') || github.event_name == 'release'
-      with:
-        ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
         poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
         poetry publish    
