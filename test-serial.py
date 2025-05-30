@@ -1,0 +1,46 @@
+from pylontech import *
+
+if __name__ == '__main__':
+    iters = 0
+
+    import sys
+    import datetime
+    from rich import print_json
+    import json
+
+    # socat  -v pty,link=/tmp/serial,waitslave tcp:192.168.10.237:23,forever
+    if len(sys.argv) < 2:
+        print("Usage: python test-tcp.py <serialdev> <iterations>")
+        exit(1)
+
+    host = sys.argv[1]
+    iterations = sys.argv[2]
+    stop = lambda iter: iter < 1
+    if iterations == "inf":
+        stop = lambda iter: True
+    if iterations != "inf":
+        stop = lambda iter: iter < int(iterations)
+
+    while stop(iters):
+        iters += 1
+        try:
+            p = Pylontech(SerialDeviceTransport(serial_port=host, baudrate=115200))
+            bats = p.scan_for_batteries(2, 10)
+            print("Battery stack:")
+            print_json(json.dumps(to_json_serializable(bats)))
+
+            subiters = 0
+
+            while stop(subiters):
+                subiters += 1
+                result = { "timestamp": datetime.datetime.now().isoformat(), "modules": []}
+                for idx in bats.range():
+                        vals=to_json_serializable(p.get_values_single(idx))
+                        result["modules"].append(vals)
+                print("Parameters:")
+                print_json(json.dumps(result))
+
+        except (KeyboardInterrupt, SystemExit):
+            exit(0)
+        except BaseException as e:
+            raise e

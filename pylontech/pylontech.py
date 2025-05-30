@@ -1,4 +1,6 @@
-from transport import *
+from .transport import *
+from .schema import *
+from typing import *
 
 logger = logging.getLogger(__name__)
 
@@ -96,39 +98,3 @@ class Pylontech(PylontechSchema):
         self.transport.send_cmd(adr, 0x4f,b'FF')
         return self.transport.read_frame()
 
-if __name__ == '__main__':
-    iters = 0
-
-    import sys
-    import datetime
-    from rich import print_json
-
-    stop = lambda iter: iter < 1
-    if len(sys.argv) > 1 and sys.argv[1] == "inf":
-        stop = lambda iter: True
-    if len(sys.argv) > 1 and sys.argv[1] != "inf":
-        stop = lambda iter: iter < int(sys.argv[1])
-
-    while stop(iters):
-        iters += 1
-        try:
-            p = Pylontech(TelnetTransport(host='192.168.10.237'))
-            bats = p.scan_for_batteries(2, 10)
-            print("Battery stack:")
-            print_json(json.dumps(to_json_serializable(bats)))
-
-            subiters = 0
-
-            while stop(subiters):
-                subiters += 1
-                result = { "timestamp": datetime.datetime.now().isoformat(), "modules": []}
-                for idx in bats.range():
-                        vals=to_json_serializable(p.get_values_single(idx))
-                        result["modules"].append(vals)
-                print("Parameters:")
-                print_json(json.dumps(result))
-
-        except (KeyboardInterrupt, SystemExit):
-            exit(0)
-        except BaseException as e:
-            raise e

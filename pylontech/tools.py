@@ -1,5 +1,4 @@
 import construct
-import json
 
 
 class HexToByte(construct.Adapter):

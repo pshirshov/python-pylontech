@@ -1,5 +1,5 @@
 import construct
-from tools import *
+from .tools import *
 
 class PylontechSchema:
     manufacturer_info_fmt = construct.Struct(
