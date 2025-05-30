@@ -1,10 +1,11 @@
+from time import sleep
+
 from pylontech import *
 
 if __name__ == '__main__':
     iters = 0
 
     import sys
-    import datetime
     from rich import print_json
     import json
 
@@ -15,32 +16,29 @@ if __name__ == '__main__':
 
     host = sys.argv[1]
     iterations = sys.argv[2]
-    stop = lambda iter: iter < 1
+
+    cont = lambda iter: iter < 1
     if iterations == "inf":
-        stop = lambda iter: True
+        cont = lambda iter: True
     if iterations != "inf":
-        stop = lambda iter: iter < int(iterations)
+        cont = lambda iter: iter < int(iterations)
 
-    while stop(iters):
-        iters += 1
-        try:
-            p = Pylontech(SerialDeviceTransport(serial_port=host, baudrate=115200))
-            bats = p.scan_for_batteries(2, 10)
-            print("Battery stack:")
-            print_json(json.dumps(to_json_serializable(bats)))
+    p = Pylontech(SerialDeviceTransport(serial_port=host, baudrate=115200))
+    bats = p.scan_for_batteries(2, 10)
+    print("Battery stack:")
+    print_json(json.dumps(to_json_serializable(bats)))
 
-            subiters = 0
+    cc = 0
 
-            while stop(subiters):
-                subiters += 1
-                result = { "timestamp": datetime.datetime.now().isoformat(), "modules": []}
-                for idx in bats.range():
-                        vals=to_json_serializable(p.get_values_single(idx))
-                        result["modules"].append(vals)
-                print("Parameters:")
-                print_json(json.dumps(result))
-
-        except (KeyboardInterrupt, SystemExit):
-            exit(0)
-        except BaseException as e:
-            raise e
+    try:
+        for b in p.poll_parameters(bats.range()):
+            cc += 1
+            if not cont(cc):
+                break
+            print("System state:")
+            print_json(json.dumps(b))
+            sleep(0.5)
+    except (KeyboardInterrupt, SystemExit):
+        exit(0)
+    except BaseException as e:
+        raise e

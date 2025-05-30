@@ -1,3 +1,5 @@
+import datetime
+
 from .transport import *
 from .schema import *
 from typing import *
@@ -25,6 +27,14 @@ class PylontechStackData:
 class Pylontech(PylontechSchema):
     def __init__(self, transport):
         self.transport = transport
+
+    def poll_parameters(self, ids: range):
+        while True:
+            result = {"timestamp": datetime.datetime.now().isoformat(), "modules": []}
+            for idx in ids:
+                vals = to_json_serializable(self.get_values_single(idx))
+                result["modules"].append(vals)
+            yield result
 
     def scan_for_batteries(self, start=0, end=255) -> PylontechStackData:
         """ Returns a map of the batteries id to their serial number """
