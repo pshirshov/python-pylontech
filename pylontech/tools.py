@@ -1,4 +1,5 @@
 import construct
+import json
 
 
 class HexToByte(construct.Adapter):
@@ -37,4 +38,25 @@ class ToCelsius(construct.Adapter):
     def _decode(self, obj, context, path) -> float:
         return (obj - 2731) / 10.0  # in Kelvin*10
 
+def to_json_serializable(obj):
+    from io import BytesIO
+    from construct import Container
+    import base64
 
+    if isinstance(obj, Container):
+        return {k: to_json_serializable(v) for k, v in obj.items() if k != "_io"}
+    elif isinstance(obj, dict):
+        return {k: to_json_serializable(v) for k, v in obj.items() if k != "_io"}
+    elif isinstance(obj, list):
+        return [to_json_serializable(v) for v in obj]
+    elif isinstance(obj, BytesIO):
+        return base64.b64encode(obj.getvalue()).decode('utf-8')  # or use .hex()
+    elif isinstance(obj, bytes):
+        return base64.b64encode(obj).decode('utf-8')  # or use obj.hex()
+    elif hasattr(obj, '__dict__'):
+        for k, v in vars(obj).items():
+            print(k, type(v), v)
+
+        return {k: to_json_serializable(v) for k, v in vars(obj).items()}
+    else:
+        return obj

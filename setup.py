@@ -13,7 +13,7 @@ setup(
     packages=['pylontech'],
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
-    install_requires=['pyserial', 'construct'],
+    install_requires=['pyserial', 'construct', 'standard-telnetlib'],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
