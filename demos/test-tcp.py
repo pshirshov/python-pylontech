@@ -27,7 +27,7 @@ if __name__ == '__main__':
     if iterations != "inf":
         cont = lambda iter: iter < int(iterations)
 
-    p = Pylontech(TelnetTransport(host=host, port=23))
+    p = Pylontech(Telnetlib3Transport(host=host, port=23))
     bats = p.scan_for_batteries(2, 10)
     print("Battery stack:")
     print_json(json.dumps(to_json_serializable(bats)))
