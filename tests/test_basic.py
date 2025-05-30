@@ -2,11 +2,11 @@ import sys
 from typing import List
 from pytest import approx
 
+from pylontech import SerialTransport
+
 sys.path.extend("..")
 
 import pylontech
-from pylontech.pylontech import ToVolt, ToAmp, ToCelsius, DivideBy1000
-import construct
 
 
 class MockSerial(object):
@@ -23,9 +23,20 @@ class MockSerial(object):
         print(f"write: {data}")
 
 
+class MockTransport(SerialTransport):
+    def __init__(self, responses: List[bytes]):
+        self.s = MockSerial(responses)
+
+    def readln(self) -> bytes:
+        return self.s.readline()
+
+    def write(self, data: bytes):
+        self.s.write(data)
+
+
 class Pylontech(pylontech.Pylontech):
     def __init__(self, responses):
-        self.s = MockSerial(responses)
+        super().__init__(MockTransport(responses))
 
 
 def test_us2000_3modules_info_parsing_1():

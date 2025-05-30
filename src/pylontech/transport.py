@@ -36,7 +36,7 @@ class SerialTransport():
 
     def send_cmd(self, address: int, cmd, info: bytes = b''):
         raw_frame = self._encode_cmd(address, cmd, info)
-        self.s.write(raw_frame)
+        self.write(raw_frame)
 
     def read_frame(self):
         raw_frame = self.readln()
