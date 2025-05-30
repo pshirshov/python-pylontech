@@ -101,6 +101,7 @@ if __name__ == '__main__':
 
     import sys
     import datetime
+    from rich import print_json
 
     stop = lambda iter: iter < 1
     if len(sys.argv) > 1 and sys.argv[1] == "inf":
@@ -114,18 +115,18 @@ if __name__ == '__main__':
             p = Pylontech(TelnetTransport(host='192.168.10.237'))
             bats = p.scan_for_batteries(2, 10)
             print("Battery stack:")
-            print(json.dumps(to_json_serializable(bats), indent=2))
+            print_json(json.dumps(to_json_serializable(bats)))
 
             subiters = 0
 
             while stop(subiters):
                 subiters += 1
-                result = { "timestamp": datetime.datetime.now().isoformat()}
+                result = { "timestamp": datetime.datetime.now().isoformat(), "modules": []}
                 for idx in bats.range():
                         vals=to_json_serializable(p.get_values_single(idx))
-                        result[f"module-{idx}"] = vals
+                        result["modules"].append(vals)
                 print("Parameters:")
-                print(json.dumps(result, indent=2))
+                print_json(json.dumps(result))
 
         except (KeyboardInterrupt, SystemExit):
             exit(0)

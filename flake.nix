@@ -24,6 +24,7 @@
                 python-pkgs.pyserial
                 python-pkgs.construct
                 python-pkgs.standard-telnetlib
+                python-pkgs.rich
               ]))
             ];
           };
