@@ -1,6 +1,10 @@
 from pylontech import *
 
 if __name__ == '__main__':
+    """
+    Direct TCP connection to devices like Waveshare RS485 to ETH, are 20-50 times faster than 
+    serial port emulation through socat. Turn "RFC2217" option on.
+    """
     iters = 0
 
     import sys
