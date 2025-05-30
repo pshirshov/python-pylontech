@@ -1,4 +1,4 @@
-name: PyPi Release
+name: Build, Test Release
 
 on:
   push:
@@ -22,14 +22,14 @@ jobs:
     - name: Install Poetry
       uses: snok/install-poetry@v1
     - name: Install dependencies
-      run: >-
+      run: |
         poetry lock --no-interaction
         poetry install --no-interaction
     - name: Build
-      run: >-
+      run: |
         poetry build
     - name: Test
-      run: >-
+      run: |
         poetry run pytest
     - name: Lint with flake8
       continue-on-error: true
