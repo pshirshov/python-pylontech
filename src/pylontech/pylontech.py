@@ -31,7 +31,7 @@ class Pylontech(PylontechSchema):
 
     def poll_parameters(self, ids: range):
         while True:
-            result = {"timestamp": datetime.datetime.now().isoformat(), "modules": []}
+            result = {"timestamp": datetime.datetime.now(datetime.UTC), "modules": []}
             for idx in ids:
                 vals = to_json_serializable(self.get_values_single(idx))
                 result["modules"].append(vals)

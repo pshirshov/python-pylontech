@@ -63,7 +63,7 @@ def minimize(b: json) -> json:
 
 def mongo_cleanup(collection, retention_days):
     threshold = datetime.datetime.now() - datetime.timedelta(days=retention_days)
-    collection.delete_many({"createdAt": {"$lt": threshold}})
+    collection.delete_many({"ts": {"$lt": threshold}})
 
 def run(argv: list[str]):
     parser = argparse.ArgumentParser(description="Pylontech RS485 poller")
@@ -99,7 +99,7 @@ def run(argv: list[str]):
             collection_meta = db[args.mongo_collection_meta]
 
             collection_hist = db[args.mongo_collection_history]
-            collection_hist.create_index("createdAt", expireAfterSeconds=3600*24*90)
+            collection_hist.create_index("ts", expireAfterSeconds=3600*24*90)
 
             logging.info("About to start polling...")
             bats = p.scan_for_batteries(2, 10)
