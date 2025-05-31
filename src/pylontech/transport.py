@@ -141,8 +141,7 @@ class Telnetlib3Transport(SerialTransport):
         self.timeout = timeout
         self.reader = None
         self.writer = None
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
+        self.loop = asyncio.get_event_loop()
         self.loop.run_until_complete(self._connect())
 
     async def _connect(self):
