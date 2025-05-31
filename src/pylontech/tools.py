@@ -43,9 +43,9 @@ def to_json_serializable(obj):
     import base64
 
     if isinstance(obj, Container):
-        return {k: to_json_serializable(v) for k, v in obj.items() if k != "_io"}
+        return {str(k): to_json_serializable(v) for k, v in obj.items() if k != "_io"}
     elif isinstance(obj, dict):
-        return {k: to_json_serializable(v) for k, v in obj.items() if k != "_io"}
+        return {str(k): to_json_serializable(v) for k, v in obj.items() if k != "_io"}
     elif isinstance(obj, list):
         return [to_json_serializable(v) for v in obj]
     elif isinstance(obj, BytesIO):
@@ -53,6 +53,6 @@ def to_json_serializable(obj):
     elif isinstance(obj, bytes):
         return base64.b64encode(obj).decode('utf-8')  # or use obj.hex()
     elif hasattr(obj, '__dict__'):
-        return {k: to_json_serializable(v) for k, v in vars(obj).items()}
+        return {str(k): to_json_serializable(v) for k, v in vars(obj).items()}
     else:
         return obj

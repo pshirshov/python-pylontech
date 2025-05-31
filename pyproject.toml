@@ -30,6 +30,7 @@ dependencies = [
     "standard-telnetlib",
     "Exscript",
     "rich",
+    "pymongo",
 ]
 url = "http://github.com/Frankkkkk/python-pylontech"
 

@@ -89,6 +89,12 @@ socat  -v pty,link=/tmp/serial,waitslave tcp:192.168.1.7:23,forever
 uv run python ./demos/test-serial.py /tmp/serial 1 
 ```
 
+## How to run mongodb collector
+
+```bash
+uv run poller 192.168.1.7 --mongo-url mongodb://mongodb.local:27017
+```
+
 # Hardware wiring
 The pylontech modules talk using the RS485 line protocol.
 ## Pylontech side
