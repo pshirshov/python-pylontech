@@ -53,9 +53,6 @@ def to_json_serializable(obj):
     elif isinstance(obj, bytes):
         return base64.b64encode(obj).decode('utf-8')  # or use obj.hex()
     elif hasattr(obj, '__dict__'):
-        for k, v in vars(obj).items():
-            print(k, type(v), v)
-
         return {k: to_json_serializable(v) for k, v in vars(obj).items()}
     else:
         return obj
