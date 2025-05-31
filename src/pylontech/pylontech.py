@@ -3,6 +3,7 @@ import datetime
 from .transport import *
 from .schema import *
 from typing import *
+import logging
 
 logger = logging.getLogger(__name__)
 
