@@ -27,8 +27,8 @@ classifiers = [
 dependencies = [
     "pyserial",
     "construct",
-    "telnetlib3",
     "standard-telnetlib",
+    "Exscript",
     "rich",
 ]
 url = "http://github.com/Frankkkkk/python-pylontech"

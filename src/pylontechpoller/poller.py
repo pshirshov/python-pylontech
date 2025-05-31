@@ -30,7 +30,7 @@ def run(argv: list[str]):
     while True:
         try:
             logging.debug("Preparing client...")
-            p = Pylontech(TelnetlibLegacyTransport(host=args.source_host, port=args.source_port, timeout=args.timeout))
+            p = Pylontech(ExscriptTelnetTransport(host=args.source_host, port=args.source_port, timeout=args.timeout))
             logging.info("About to start polling...")
             bats = p.scan_for_batteries(2, 10)
             logging.info("Have battery stack data")

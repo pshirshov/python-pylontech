@@ -131,33 +131,25 @@ class TelnetlibLegacyTransport(SerialTransport):
     def write(self, data: bytes):
         self.s.write(data)
 
-import asyncio
-import telnetlib3
+from Exscript.protocols import Telnet
 
-class Telnetlib3Transport(SerialTransport):
+class ExscriptTelnetTransport(SerialTransport):
     def __init__(self, host, port=23, timeout=2):
-        self.host = host
-        self.port = port
         self.timeout = timeout
-        self.reader = None
-        self.writer = None
-        self.loop = asyncio.get_event_loop()
-        self.loop.run_until_complete(self._connect())
+        self.conn = Telnet()
+        self.conn.connect(host, port)
+        self.conn.set_timeout(timeout)
 
-    async def _connect(self):
-        self.reader, self.writer = await telnetlib3.open_connection(self.host, self.port)
-
-    def readln(self) -> bytes:
-        # Read until carriage return, running async read in sync context
-        return self.loop.run_until_complete(self.reader.readuntil(b'\r'))
+    def readln(self):
+        data = b''
+        while True:
+            chunk = self.conn.tn.rawq_getchar()
+            if not chunk:
+                break
+            data += chunk
+            if chunk == b'\r':
+                break
+        return data
 
     def write(self, data: bytes):
-        # Write and drain, running async operations in sync context
-        self.writer._write(data)
-        self.loop.run_until_complete(self.writer.drain())
-
-    def close(self):
-        # Close connection and event loop
-        self.writer.close()
-        self.loop.run_until_complete(self.writer.wait_closed())
-        self.loop.close()
+        self.conn.send(data)
