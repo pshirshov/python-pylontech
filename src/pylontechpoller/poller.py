@@ -61,6 +61,10 @@ def minimize(b: json) -> json:
         "modules": list(map(minimize_module, modules)),
     }
 
+def mongo_cleanup(collection, retention_days):
+    threshold = datetime.datetime.now() - datetime.timedelta(days=retention_days)
+    collection.delete_many({"createdAt": {"$lt": threshold}})
+
 def run(argv: list[str]):
     parser = argparse.ArgumentParser(description="Pylontech RS485 poller")
 
@@ -68,7 +72,8 @@ def run(argv: list[str]):
     
     parser.add_argument("--source-port", help="Telnet host", default=23)
     parser.add_argument("--timeout", type=int, help="timeout", default=2)
-    parser.add_argument("--interval", type=int, help="polling interval in msec", default=1)
+    parser.add_argument("--interval", type=int, help="polling interval in msec", default=1000)
+    parser.add_argument("--retention-days", type=int, help="how long to retain history data", default=90)
     parser.add_argument("--debug", type=bool, help="verbose output", default=False)
     parser.add_argument("--mongo-url", type=str, help="mongodb url", default=False)
     parser.add_argument("--mongo-db", type=str, help="target mongo database", default="pylontech")
@@ -102,6 +107,7 @@ def run(argv: list[str]):
             logging.info("Have battery stack data")
             collection_meta.insert_one({'ts':  datetime.datetime.now().isoformat(), "stack": to_json_serializable(bats)})
 
+
             for b in p.poll_parameters(bats.range()):
                 cc += 1
                 
@@ -111,13 +117,15 @@ def run(argv: list[str]):
 
                 # print(print_json(json.dumps(minimize(b))))
                 collection_hist.insert_one(minimize(b))
-                
-            time.sleep(args.interval / 1000.0)
+
+                if cc % 86400 == 0:
+                    mongo_cleanup(collection_hist, args.retention_days)
+
+                time.sleep(args.interval / 1000.0)
         except (KeyboardInterrupt, SystemExit):
             exit(0)
         except BaseException as e:
             logging.error("Exception occured: %s", e)
-
 
 
 
