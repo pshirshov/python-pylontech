@@ -1,6 +1,6 @@
 [project]
 name = "python-pylontech-ext"
-version = "0.4.4"
+version = "0.4.5"
 description = "Interfaces with Pylontech Batteries using RS485 protocol"
 authors = [
     { name = "Frank Villaro-Dixon", email = "frank@villaro-dixon.eu" },

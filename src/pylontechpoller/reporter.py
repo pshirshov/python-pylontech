@@ -52,8 +52,8 @@ class HassReporter(Reporter):
 
     def report_state(self, state):
         md = state["max_module_disbalance"]
-        self.update_hass_state(self.hass_stack_disbalance, state["stack_disbalance"])
-        self.update_hass_state(self.hass_max_battery_disbalance, md[1])
+        self.update_hass_state(self.hass_stack_disbalance, int(state["stack_disbalance"] * 10000) / 10000.0)
+        self.update_hass_state(self.hass_max_battery_disbalance, int(md[1] * 10000) / 10000.0)
         self.update_hass_state(self.hass_max_battery_disbalance_id, md[0])
 
     def update_hass_state(self, id, value):
