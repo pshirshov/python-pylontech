@@ -27,10 +27,14 @@ classifiers = [
 dependencies = [
     "pyserial",
     "construct",
+
     "standard-telnetlib",
     "Exscript",
+
     "rich",
     "pymongo",
+    "requests",
+
 ]
 url = "http://github.com/Frankkkkk/python-pylontech"
 
