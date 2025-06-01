@@ -72,6 +72,29 @@ Container:
 
 This lib depends on `pyserial` and the awesome `construct` lib.
 
+
+## How to run demos
+
+TCP demo:
+
+```bash
+uv run python ./demos/test-tcp.py 192.168.1.7 10
+```
+
+Serial:
+
+```bash
+socat  -v pty,link=/tmp/serial,waitslave tcp:192.168.1.7:23,forever
+# in another terminal
+uv run python ./demos/test-serial.py /tmp/serial 1 
+```
+
+## How to run mongodb collector
+
+```bash
+uv run poller 192.168.1.7 --mongo-url mongodb://mongodb.local:27017 --interval 1000 --interval 5
+```
+
 # Hardware wiring
 The pylontech modules talk using the RS485 line protocol.
 ## Pylontech side
@@ -103,3 +126,4 @@ If you are using US2000 and US3000 batteries, then the main battery must be a US
 ## Using Pylontech LV Hub with multible battery banks
 
 If the LV hub is used the address of the RS485 devices is depending on the battery bank. To read values the specific device address is needed. To scan for devices on a bank you can use the `scan_for_batteries` function. The max range is 0 to 255.
+

@@ -1,0 +1,48 @@
+name: Build, Test Release
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Install dependencies
+      run: |
+        uv lock
+    - name: Build
+      run: |
+        uv build
+    - name: Test
+      run: |
+        uv run pytest
+    - name: Test Nix build
+      run: |
+        nix build .
+    - name: Lint with flake8
+      continue-on-error: true
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        uv run flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        uv run flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Publish distribution 📦 to PyPI
+      if: startsWith(github.event.ref, 'refs/tags') || github.event_name == 'release'
+      run: |
+        uv publish --token ${{ secrets.PYPI_TOKEN }}

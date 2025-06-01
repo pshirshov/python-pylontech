@@ -1,0 +1,79 @@
+[project]
+name = "python-pylontech-ext"
+version = "0.4.5"
+description = "Interfaces with Pylontech Batteries using RS485 protocol"
+authors = [
+    { name = "Frank Villaro-Dixon", email = "frank@villaro-dixon.eu" },
+    { name = "Pavel Shirshov", email = "pshirshov@eml.cc" },
+]
+requires-python = ">=3.13"
+readme = "README.md"
+license = "MIT"
+keywords = [
+    "pylontech",
+    "pylon",
+    "rs485",
+    "lithium battery",
+    "US2000",
+    "US2000C",
+    "US3000",
+    "US5000",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "pyserial",
+    "construct",
+
+    "standard-telnetlib",
+    "Exscript",
+
+    "rich",
+    "pymongo",
+    "requests",
+
+]
+url = "http://github.com/Frankkkkk/python-pylontech"
+
+[project.scripts]
+poller = "pylontechpoller:poller.main"
+
+[dependency-groups]
+test = ["pytest"]
+dev = ["flake8"]
+
+[tool.uv]
+default-groups = [
+    "test",
+    "dev",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/pylontech",
+    "src/pylontechpoller",
+]
+exclude = ["demos"]
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "src/pylontech",
+    "src/pylontechpoller",
+]
+exclude = ["demos"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/pylontech" = "pylontech"
+"src/pylontechpoller" = "pylontechpoller"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+log_cli_level = "INFO"
+xfail_strict = true
