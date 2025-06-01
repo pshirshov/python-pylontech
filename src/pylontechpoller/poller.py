@@ -60,7 +60,7 @@ def minimize(b: json) -> json:
         "ts": b["timestamp"],
         "cvmin": min_pair,
         "cvmax": max_pair,
-        "stack_disbalance": min_pair[1] - max_pair[1],
+        "stack_disbalance": max_pair[1] - min_pair[1],
         "max_module_disbalance": max_disbalance,
         "modules": list(map(minimize_module, modules)),
     }
