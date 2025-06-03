@@ -92,7 +92,7 @@ uv run python ./demos/test-serial.py /tmp/serial 1
 ## How to run mongodb collector
 
 ```bash
-uv run poller 192.168.1.7 --mongo-url mongodb://mongodb.local:27017 --interval 1000 --interval 5
+uv run poller 192.168.1.7 --mongo-url mongodb://mongodb.local:27017 --interval 1000
 ```
 
 # Hardware wiring

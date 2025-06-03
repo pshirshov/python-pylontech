@@ -96,6 +96,7 @@ def run(argv: list[str]):
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=level)
 
     cc = 0
+    errs = 0
     spinner = ['|', '/', '-', '\\']
 
     reporters = []
@@ -117,7 +118,7 @@ def run(argv: list[str]):
                 ))
 
             hass_url = args.hass_url
-            print(hass_url)
+
             if hass_url:
                 reporters.append(HassReporter(
                     hass_url,
@@ -147,18 +148,24 @@ def run(argv: list[str]):
                 for reporter in reporters:
                     reporter.report_state(mb)
 
+                if cc % 1000 == 0:
+                    logging.info("Updates submitted since startup: %d", cc)
                 if cc % 86400 == 0:
                     for reporter in reporters:
                         reporter.cleanup()
 
                 time.sleep(args.interval / 1000.0)
+                errs = 0
         except (KeyboardInterrupt, SystemExit):
             exit(0)
         except BaseException as e:
+            errs += 1
             logging.error("Exception occured: %s", e)
-
-
-
+            if errs > 10:
+                logging.error("Too many exceptions in a row, exiting just in casej")
+                exit(1)
+            else:
+                time.sleep(args.interval / 1000.0)
 def main():
     import sys
     run(sys.argv)
