@@ -150,7 +150,6 @@ def run(argv: list[str]):
 
                 if cc % 1000 == 0:
                     logging.info("Updates submitted since startup: %d", cc)
-                if cc % 86400 == 0:
                     for reporter in reporters:
                         reporter.cleanup()
 
@@ -162,7 +161,7 @@ def run(argv: list[str]):
             errs += 1
             logging.error("Exception occured: %s", e)
             if errs > 10:
-                logging.error("Too many exceptions in a row, exiting just in casej")
+                logging.error("Too many exceptions in a row, exiting just in case")
                 exit(1)
             else:
                 time.sleep(args.interval / 1000.0)
