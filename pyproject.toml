@@ -35,6 +35,9 @@ dependencies = [
     "pymongo",
     "requests",
 
+    "paho-mqtt",
+    "ha-mqtt-discoverable",
+
 ]
 url = "http://github.com/Frankkkkk/python-pylontech"
 

@@ -1,69 +1,16 @@
 import argparse
-import json
 import logging
 import sys
 import time
 
 from pylontech import *
-from pylontechpoller.reporter import MongoReporter, HassReporter
+from pylontechpoller.mqtt_reporter import MqttReporter
+from pylontechpoller.hass_basic_reporter import HassReporter
+from pylontechpoller.mongo_reporter import MongoReporter
+from pylontechpoller.tools import minimize
 
 logger = logging.getLogger(__name__)
 
-
-def find_min_max_modules(modules):
-    all_voltages = []
-    all_disbalances = []
-
-    for module in modules:
-        mid = module["NumberOfModule"]
-        cvs = module["CellVoltages"]
-        for voltage in cvs:
-            all_voltages.append((mid, voltage))
-        vmax = max(cvs)
-        vmin = min(cvs)
-        d = vmax - vmin
-        all_disbalances.append((mid, d))
-
-    if not all_voltages:
-        return None, None
-
-    min_pair = min(all_voltages, key=lambda x: x[1])
-    max_pair = max(all_voltages, key=lambda x: x[1])
-    max_disbalance = max(all_disbalances, key=lambda x: abs(x[1]))
-
-    return min_pair, max_pair, max_disbalance
-
-
-
-def minimize(b: json) -> json:
-    def minimize_module(m: json) -> json:
-        return {
-            "n": m["NumberOfModule"],
-            "v": m["Voltage"],
-            "cv": m["CellVoltages"],
-            "current": m["Current"],
-            "pw": m["Power"],
-            "cycle": m["CycleNumber"],
-            "soc": m["StateOfCharge"],
-            "tempavg": m["AverageBMSTemperature"],
-            "temps": m["GroupedCellsTemperatures"],
-            "remaining": m["RemainingCapacity"],
-            "disbalance": max(m["CellVoltages"]) - min(m["CellVoltages"])
-        }
-
-    modules = b["modules"]
-    find_min_max_modules(modules)
-
-    (min_pair, max_pair, max_disbalance) = find_min_max_modules(modules)
-
-    return {
-        "ts": b["timestamp"],
-        "cvmin": min_pair,
-        "cvmax": max_pair,
-        "stack_disbalance": max_pair[1] - min_pair[1],
-        "max_module_disbalance": max_disbalance,
-        "modules": list(map(minimize_module, modules)),
-    }
 
 
 
@@ -87,7 +34,14 @@ def run(argv: list[str]):
     parser.add_argument("--hass-stack-disbalance", type=str, help="state id", default="input_number.stack_disbalance")
     parser.add_argument("--hass-max-battery-disbalance", type=str, help="state id", default="input_number.max_bat_disbalance")
     parser.add_argument("--hass-max-battery-disbalance-id", type=str, help="state id", default="input_text.max_disbalance_id")
-    parser.add_argument("--hass-token-file", type=str, help="hass token file", default="/var/run/agenix/hass-token")
+    parser.add_argument("--hass-token", type=str, help="hass token or token file", default="/var/run/agenix/hass-token")
+
+
+    parser.add_argument("--mqtt-host", type=str, help="mqtt host", default=None)
+    parser.add_argument("--mqtt-port", type=int, help="mqtt url", default=1883)
+    parser.add_argument("--mqtt-user", type=str, help="mqtt login", default="mqtt")
+    parser.add_argument("--mqtt-password", type=str, help="mqtt password or password file", default="/var/run/agenix/mqtt-user")
+
 
 
     args = parser.parse_args(argv[1:])
@@ -128,13 +82,23 @@ def run(argv: list[str]):
                     args.hass_token_file
                 ))
 
+            mqtt_host = args.mqtt_host
+
+            if mqtt_host:
+                reporters.append(MqttReporter(
+                    mqtt_host,
+                    args.mqtt_port,
+                    args.mqtt_user,
+                    args.mqtt_password,
+                ))
+
             logging.info("About to start polling...")
             bats = p.scan_for_batteries(2, 10)
 
             logging.info("Have battery stack data")
 
             for reporter in reporters:
-                reporter.report_meta(bats)
+                reporter.report_meta(bats, p)
 
             for b in p.poll_parameters(bats.range()):
                 cc += 1
