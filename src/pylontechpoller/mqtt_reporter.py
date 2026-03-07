@@ -28,6 +28,7 @@ class MqttReporter(Reporter):
             device_class="voltage",
             unique_id="stack_disbalance",
             unit_of_measurement="V",
+            state_class="measurement",
             suggested_display_precision=3,
             device=self.device_info,
             icon="mdi:scale-unbalanced",
@@ -40,6 +41,7 @@ class MqttReporter(Reporter):
             device_class="voltage",
             unique_id="max_battery_disbalance",
             unit_of_measurement="V",
+            state_class="measurement",
             suggested_display_precision=3,
             device=self.device_info,
             icon="mdi:scale-unbalanced",
@@ -78,6 +80,7 @@ class MqttReporter(Reporter):
                     device_class="voltage",
                     unique_id=f"cell_voltage_{module_id}_{cn}",
                     unit_of_measurement="V",
+                    state_class="measurement",
                     suggested_display_precision=3,
                     device=device_info,
                     entity_category="diagnostic",
@@ -90,6 +93,7 @@ class MqttReporter(Reporter):
                     device_class="battery",
                     unique_id=f"battery_soc_{module_id}",
                     unit_of_measurement="%",
+                    state_class="measurement",
                     suggested_display_precision=1,
                     device=device_info,
                 ))),
@@ -98,6 +102,7 @@ class MqttReporter(Reporter):
                     device_class="voltage",
                     unique_id=f"battery_disbalance_{module_id}",
                     unit_of_measurement="V",
+                    state_class="measurement",
                     suggested_display_precision=3,
                     device=device_info,
                     icon="mdi:scale-unbalanced",
@@ -107,6 +112,7 @@ class MqttReporter(Reporter):
                     device_class="voltage",
                     unique_id=f"battery_voltage_{module_id}",
                     unit_of_measurement="V",
+                    state_class="measurement",
                     suggested_display_precision=3,
                     device=device_info,
                     icon="mdi:gauge",
@@ -116,6 +122,7 @@ class MqttReporter(Reporter):
                     device_class="current",
                     unique_id=f"battery_current_{module_id}",
                     unit_of_measurement="A",
+                    state_class="measurement",
                     suggested_display_precision=3,
                     device=device_info,
                     icon="mdi:current-dc",
@@ -125,6 +132,7 @@ class MqttReporter(Reporter):
                     device_class="power",
                     unique_id=f"battery_power_{module_id}",
                     unit_of_measurement="W",
+                    state_class="measurement",
                     suggested_display_precision=2,
                     device=device_info,
                     icon="mdi:battery-charging",
@@ -132,6 +140,7 @@ class MqttReporter(Reporter):
                 "bat_cycle": Sensor(Settings(mqtt=self.mqtt_settings, entity=SensorInfo(
                     name="Cycle",
                     unique_id=f"battery_cycle_{module_id}",
+                    state_class="measurement",
                     device=device_info,
                     icon="mdi:battery-sync",
                 ))),
@@ -139,7 +148,8 @@ class MqttReporter(Reporter):
                     name="Temperature",
                     device_class="temperature",
                     unique_id=f"battery_temperature_{module_id}",
-                    unit_of_measurement="C",
+                    unit_of_measurement="°C",
+                    state_class="measurement",
                     suggested_display_precision=1,
                     device=device_info,
                 ))),
@@ -156,7 +166,7 @@ class MqttReporter(Reporter):
             s["bat_disbalance"].set_state(b["disbalance"])
             s["bat_voltage"].set_state(b["v"])
             s["bat_current"].set_state(b["current"])
-            s["bat_soc"].set_state(int(b["soc"] * 1000) / 10.0)
+            s["bat_soc"].set_state(round(b["soc"] * 100, 1))
             s["bat_power"].set_state(b["pw"])
             s["bat_cycle"].set_state(b["cycle"])
             s["bat_temp"].set_state(b["tempavg"])
