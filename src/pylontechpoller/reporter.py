@@ -5,6 +5,7 @@ from pylontech.pylontech import PylontechStackData
 
 logger = logging.getLogger(__name__)
 
+
 class Reporter:
     def report_meta(self, meta: PylontechStackData, p: Pylontech):
         pass
@@ -15,4 +16,5 @@ class Reporter:
     def cleanup(self):
         pass
 
-
+    def close(self):
+        pass
