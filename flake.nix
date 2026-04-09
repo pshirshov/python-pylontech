@@ -39,6 +39,7 @@
           config.allowUnfree = true;
         };
         lib = pkgs.lib;
+        rustManifest = lib.importTOML ./rust-mqtt-adapter/Cargo.toml;
      workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
 
       overlay = workspace.mkPyprojectOverlay {
@@ -61,6 +62,12 @@
               pyprojectOverrides
             ]
           );
+      rustMqttAdapter = pkgs.rustPlatform.buildRustPackage {
+        pname = rustManifest.package.name;
+        version = rustManifest.package.version;
+        src = ./rust-mqtt-adapter;
+        cargoLock.lockFile = ./rust-mqtt-adapter/Cargo.lock;
+      };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -68,6 +75,9 @@
             git
             socat
             uv
+            cargo
+            rustc
+            rustfmt
 
             (python313.withPackages (python-pkgs: [
               python-pkgs.pyserial
@@ -79,10 +89,15 @@
         };
 
      packages.default = pythonSet.mkVirtualEnv "pylontechpoller-env" workspace.deps.default;
+        packages.pylontech-mqtt-adapter = rustMqttAdapter;
 
         apps.default = {
           type = "app";
           program = "${self.packages."${system}".default}/bin/poller";
+        };
+        apps.pylontech-mqtt-adapter = {
+          type = "app";
+          program = "${self.packages."${system}".pylontech-mqtt-adapter}/bin/pylontech-mqtt-adapter";
         };
       }
       );

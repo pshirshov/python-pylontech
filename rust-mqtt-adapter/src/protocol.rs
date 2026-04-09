@@ -1,5 +1,6 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use std::sync::Arc;
 
 use thiserror::Error;
 
@@ -7,6 +8,7 @@ use crate::config::SourceConfig;
 use crate::model::{
     ManagementInfo, ManagementStatus, ModuleIdentity, ModuleState, SystemParameters,
 };
+use crate::stats::RuntimeStats;
 
 const FRAME_START_BYTE: u8 = b'~';
 const FRAME_END_BYTE: u8 = b'\r';
@@ -55,15 +57,16 @@ struct ResponseFrame {
 
 pub struct PylontechClient {
     stream: TcpStream,
+    stats: Arc<RuntimeStats>,
 }
 
 impl PylontechClient {
-    pub fn connect(config: &SourceConfig) -> Result<Self, ProtocolError> {
+    pub fn connect(config: &SourceConfig, stats: Arc<RuntimeStats>) -> Result<Self, ProtocolError> {
         let address = format!("{}:{}", config.host, config.port);
         let stream = TcpStream::connect(address)?;
         stream.set_read_timeout(Some(config.timeout))?;
         stream.set_write_timeout(Some(config.timeout))?;
-        Ok(Self { stream })
+        Ok(Self { stream, stats })
     }
 
     pub fn scan_modules(
@@ -155,10 +158,23 @@ impl PylontechClient {
         info_bytes: &[u8],
     ) -> Result<ResponseFrame, ProtocolError> {
         let request_frame = encode_command(address, command, info_bytes)?;
-        self.stream.write_all(&request_frame)?;
-        self.stream.flush()?;
+        if let Err(error) = self.stream.write_all(&request_frame) {
+            self.stats.record_source_error();
+            return Err(ProtocolError::Io(error));
+        }
+        self.stats.record_source_write(request_frame.len());
+        if let Err(error) = self.stream.flush() {
+            self.stats.record_source_error();
+            return Err(ProtocolError::Io(error));
+        }
         let raw_frame = self.read_raw_frame()?;
-        parse_response_frame(&raw_frame)
+        match parse_response_frame(&raw_frame) {
+            Ok(frame) => Ok(frame),
+            Err(error) => {
+                self.stats.record_source_error();
+                Err(error)
+            }
+        }
     }
 
     fn read_raw_frame(&mut self) -> Result<Vec<u8>, ProtocolError> {
@@ -180,11 +196,18 @@ impl PylontechClient {
 
                     frame.push(byte);
                     if byte == FRAME_END_BYTE {
+                        self.stats.record_source_read(frame.len());
                         return Ok(frame);
                     }
                 }
-                Err(error) if is_timeout_error(&error) => return Err(ProtocolError::Timeout),
-                Err(error) => return Err(ProtocolError::Io(error)),
+                Err(error) if is_timeout_error(&error) => {
+                    self.stats.record_source_timeout();
+                    return Err(ProtocolError::Timeout);
+                }
+                Err(error) => {
+                    self.stats.record_source_error();
+                    return Err(ProtocolError::Io(error));
+                }
             }
         }
     }

@@ -14,6 +14,7 @@ const DEFAULT_INTERVAL_MILLIS: u64 = 1_000;
 const DEFAULT_MANAGEMENT_INTERVAL_MILLIS: u64 = 30_000;
 const DEFAULT_RECONNECT_INITIAL_DELAY_MILLIS: u64 = 1_000;
 const DEFAULT_RECONNECT_MAX_DELAY_MILLIS: u64 = 30_000;
+const DEFAULT_STATS_INTERVAL_MILLIS: u64 = 300_000;
 const DEFAULT_SCAN_START: u8 = 2;
 const DEFAULT_SCAN_END: u8 = 9;
 const DEFAULT_DISCOVERY_PREFIX: &str = "homeassistant";
@@ -41,6 +42,8 @@ pub struct CliArgs {
     pub reconnect_initial_delay_millis: u64,
     #[arg(long, default_value_t = DEFAULT_RECONNECT_MAX_DELAY_MILLIS, help = "Maximum reconnect delay in milliseconds")]
     pub reconnect_max_delay_millis: u64,
+    #[arg(long, default_value_t = DEFAULT_STATS_INTERVAL_MILLIS, help = "Periodic liveness stats interval in milliseconds")]
+    pub stats_interval_millis: u64,
     #[arg(long, help = "MQTT broker host")]
     pub mqtt_host: String,
     #[arg(long, default_value_t = DEFAULT_MQTT_PORT, help = "MQTT broker port")]
@@ -65,6 +68,7 @@ pub struct AppConfig {
     pub polling: PollingConfig,
     pub mqtt: MqttConfig,
     pub reconnect: ReconnectConfig,
+    pub stats: StatsConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -103,6 +107,11 @@ pub struct MqttConfig {
 pub struct ReconnectConfig {
     pub initial_delay: Duration,
     pub max_delay: Duration,
+}
+
+#[derive(Debug, Clone)]
+pub struct StatsConfig {
+    pub interval: Duration,
 }
 
 impl CliArgs {
@@ -154,6 +163,11 @@ impl CliArgs {
                 self.reconnect_initial_delay_millis, self.reconnect_max_delay_millis
             )));
         }
+        if self.stats_interval_millis == 0 {
+            return Err(AppError::InvalidConfig(
+                "stats interval must be greater than zero".to_string(),
+            ));
+        }
 
         let password = load_password(self.mqtt_password, self.mqtt_password_file)?;
         if password.is_some() && self.mqtt_user.is_none() {
@@ -189,6 +203,9 @@ impl CliArgs {
             reconnect: ReconnectConfig {
                 initial_delay: Duration::from_millis(self.reconnect_initial_delay_millis),
                 max_delay: Duration::from_millis(self.reconnect_max_delay_millis),
+            },
+            stats: StatsConfig {
+                interval: Duration::from_millis(self.stats_interval_millis),
             },
         })
     }
@@ -243,6 +260,7 @@ mod tests {
             scan_end: 9,
             reconnect_initial_delay_millis: 10_000,
             reconnect_max_delay_millis: 1_000,
+            stats_interval_millis: 300_000,
             mqtt_host: "mqtt.local".to_string(),
             mqtt_port: 1883,
             mqtt_user: None,

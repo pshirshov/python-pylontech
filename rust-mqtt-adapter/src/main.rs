@@ -3,6 +3,7 @@ mod error;
 mod model;
 mod mqtt;
 mod protocol;
+mod stats;
 
 use std::thread;
 use std::time::{Duration, Instant};
@@ -14,6 +15,7 @@ use crate::error::{AppError, AppResult};
 use crate::model::StackState;
 use crate::mqtt::MqttPublisher;
 use crate::protocol::PylontechClient;
+use crate::stats::RuntimeStats;
 
 fn main() -> Result<(), AppError> {
     let config = CliArgs::parse().into_config()?;
@@ -21,16 +23,19 @@ fn main() -> Result<(), AppError> {
 }
 
 fn run(config: AppConfig) -> AppResult<()> {
+    let stats = RuntimeStats::new_shared();
+    stats.spawn_reporter(config.stats.interval);
     let mut reconnect_backoff =
         ReconnectBackoff::new(config.reconnect.initial_delay, config.reconnect.max_delay);
 
     loop {
-        match run_session(&config) {
+        match run_session(&config, &stats) {
             Ok(()) => {
                 reconnect_backoff.reset();
                 return Ok(());
             }
             Err(error) => {
+                stats.record_recovery();
                 let delay = reconnect_backoff.next_delay();
                 eprintln!("session failed: {}; reconnecting in {:?}", error, delay);
                 thread::sleep(delay);
@@ -39,17 +44,21 @@ fn run(config: AppConfig) -> AppResult<()> {
     }
 }
 
-fn run_session(config: &AppConfig) -> AppResult<()> {
-    let publisher = MqttPublisher::connect(&config.mqtt)?;
-    let result = run_session_inner(config, &publisher);
+fn run_session(config: &AppConfig, stats: &std::sync::Arc<RuntimeStats>) -> AppResult<()> {
+    let publisher = MqttPublisher::connect(&config.mqtt, std::sync::Arc::clone(stats))?;
+    let result = run_session_inner(config, &publisher, stats);
     if result.is_err() {
         publisher.publish_offline_best_effort();
     }
     result
 }
 
-fn run_session_inner(config: &AppConfig, publisher: &MqttPublisher) -> AppResult<()> {
-    let mut client = PylontechClient::connect(&config.source)?;
+fn run_session_inner(
+    config: &AppConfig,
+    publisher: &MqttPublisher,
+    stats: &std::sync::Arc<RuntimeStats>,
+) -> AppResult<()> {
+    let mut client = PylontechClient::connect(&config.source, std::sync::Arc::clone(stats))?;
     let modules = client.scan_modules(config.polling.addresses())?;
     if modules.is_empty() {
         return Err(AppError::InvalidState(format!(
@@ -88,6 +97,7 @@ fn run_session_inner(config: &AppConfig, publisher: &MqttPublisher) -> AppResult
         for state in &states {
             publisher.publish_module_state(state)?;
         }
+        stats.record_successful_cycle();
 
         thread::sleep(config.polling.interval);
     }

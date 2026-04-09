@@ -10,6 +10,7 @@ use serde_json::{Map, Value, json};
 use crate::config::MqttConfig;
 use crate::error::AppResult;
 use crate::model::{ManagementInfo, ModuleIdentity, ModuleState, StackState, SystemParameters};
+use crate::stats::RuntimeStats;
 
 const MQTT_KEEPALIVE_SECONDS: u64 = 30;
 const MQTT_REQUEST_CAPACITY: usize = 32;
@@ -432,10 +433,11 @@ pub struct MqttPublisher {
     topic_prefix: String,
     healthy: Arc<AtomicBool>,
     last_error: Arc<Mutex<Option<String>>>,
+    stats: Arc<RuntimeStats>,
 }
 
 impl MqttPublisher {
-    pub fn connect(config: &MqttConfig) -> AppResult<Self> {
+    pub fn connect(config: &MqttConfig, stats: Arc<RuntimeStats>) -> AppResult<Self> {
         let status_topic = format!("{}/status", config.topic_prefix);
         let mut options = MqttOptions::new(&config.client_id, &config.host, config.port);
         options.set_keep_alive(Duration::from_secs(MQTT_KEEPALIVE_SECONDS));
@@ -477,6 +479,7 @@ impl MqttPublisher {
             topic_prefix: config.topic_prefix.clone(),
             healthy,
             last_error,
+            stats,
         };
         publisher.publish_text(&publisher.availability_topic(), true, "online")?;
         Ok(publisher)
@@ -497,9 +500,13 @@ impl MqttPublisher {
     }
 
     pub fn publish_offline_best_effort(&self) {
-        let _ = self
+        if self
             .client
-            .publish(self.availability_topic(), QoS::AtLeastOnce, true, "offline");
+            .publish(self.availability_topic(), QoS::AtLeastOnce, true, "offline")
+            .is_ok()
+        {
+            self.stats.record_mqtt_message_sent();
+        }
     }
 
     pub fn publish_discovery(&self, modules: &[ModuleIdentity]) -> AppResult<()> {
@@ -709,6 +716,7 @@ impl MqttPublisher {
         self.ensure_healthy()?;
         self.client
             .publish(topic, QoS::AtLeastOnce, retain, payload)?;
+        self.stats.record_mqtt_message_sent();
         Ok(())
     }
 
